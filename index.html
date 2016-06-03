@@ -1,0 +1,17 @@
+---
+layout: default
+title: blog
+---
+
+<div class="home">
+  <h1>Posts</h1>
+  <ul class="toc">
+    {% for post in site.posts %}
+    <div class="toc-entry">
+      <span class="toc-date">{{ post.date | date_to_string }}</span>
+      <span class="toc-separator">–</span>
+      <span class="toc-content"><a href="{{ post.url }}">{{ post.title }}</a></span>
+    </div>
+    {% endfor %}
+  </ul>
+</div>
