@@ -6,13 +6,15 @@
   <meta name="author" content="Marc Tiehuis">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title }}</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/syntax.css">
+  <style>
+{% include style.css %}
+{% include syntax.css %}
+  </style>
 </head>
 
 <body>
   <div class="site">
-    {{ content }}
+{{ content }}
     <div class="footer">
       <a href="/">home</a>
       ∘
