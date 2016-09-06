@@ -1,0 +1,33 @@
+.post, .home {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 3em;
+    margin-bottom: 3em;
+}
+
+.toc-date {
+    font-size: 0.7em;
+}
+
+pre > code {
+    display: block;
+    background-color: #FFFDFC;
+    margin-left: 1.2em;
+    margin-right: 1.2em;
+}
+
+@media screen and (min-width: 825px) {
+	.post, .home, .central-element {
+		width: 660px;
+	}
+}
+
+@media screen and (max-width: 824px) {
+	.post, .home, .central-element {
+		width: 80%;
+	}
+}
