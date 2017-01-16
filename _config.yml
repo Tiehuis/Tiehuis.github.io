@@ -1,2 +1,3 @@
 markdown: redcarpet
 highlighter: rouge
+permalink: /:title.html # Require .html for local builds

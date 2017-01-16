@@ -2,7 +2,7 @@ Installation
 ------------
 
 ```
-apt install ruby-dev nodejs
+pacman -S ruby
 gem install jekyll redcarpet rouge
 npm -g live-server
 ```
