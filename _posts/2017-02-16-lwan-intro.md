@@ -9,6 +9,9 @@ a complete example project.</small>*
 [Lwan](https://lwan.ws/) is a high performance & scalable web server written in
 C.
 
+*The main page has now been updated so the following is no longer applicable.
+Skip to the **Building** section.*
+
 An API example is listed on the main project page.
 
 ```c
