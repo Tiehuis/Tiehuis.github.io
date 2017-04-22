@@ -7,8 +7,8 @@ layout: post
 for a final implementation if you don't want to read all this.*</small>
 
 Generic data structures in C typically have a pretty unfriendly API. They
-either rely on void pointers and erase type information or have resort to
-macros to provide a semblance of the templating system found in C++.
+either rely on void pointers and erase type information, or resort to macros
+to provide a semblance of the templating system found in C++.
 
 This post will look at constructing a macro-based vector in C with a focus on
 ease of use. We will use modern C11 features and ample compiler extensions to
