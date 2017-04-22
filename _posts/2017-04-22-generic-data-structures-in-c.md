@@ -760,10 +760,9 @@ int main(void)
 So would I recommend using this? Probably not. If you were insistent on
 sticking with C however I think the best compromise would be to generate the
 specific instantiations (similar to what [khash](https://attractivechaos.wordpress.com/2008/09/02/implementing-generic-hash-library-in-c/)
-does).Keeping implementations in their own implementation file which gets rid of
-practically all the problems specified here. Alternatively, if performance and
-the "type-safety" isn't a big deal, then a tried and tested `void*`
-implementation would be good too.
+does). This gets rid of most of the problems specified here. Alternatively,
+if performance and the type-safety isn't a big deal, then a tried and tested
+`void*` implementation would be good too.
 
 At the end of the day though, the pragmatic solution would be to just use C++
 if there are no reasons not to and call it a day. Especially if you are
