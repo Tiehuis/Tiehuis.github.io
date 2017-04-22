@@ -64,11 +64,11 @@ qvec_new(int, v);
 
 The flexible array member allows us to get away with a single call to `malloc`
 which is a minor nicety. Otherwise, this is a little underwhelming. The
-seperation of declaration and initializtion is not ideal.
+separation of declaration and initialization is not ideal.
 
 To make this a bit nicer, we can use [statement expressions](https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement-Exprs)
-which allow multiple statements to be used as an expression.
-Our new definition for `new` would then be
+which allow multiple statements to be evaluated and used as if they were an
+expression. Our new definition for `new` would then be
 
 ```c
 #define qvec_new(T)                                                           \
@@ -175,7 +175,7 @@ Since this `data` doesn't take any space, we can see that the other members
 (`len` and `cap`) have a fixed type and therefore size, regardless of the type
 of `T`.
 
-We can seperate the type of `qvec` into
+We can separate the type of `qvec` into
 
 ```c
 #define qvec_base       \
@@ -193,7 +193,7 @@ We can seperate the type of `qvec` into
 This now allows us to query the size of the type-independent part of a `qvec`
 while retaining access to all the members in the same way.
 
-As an aside, we can define this using less macro-wizadry if we enable the
+As an aside, we can define this using less macro-wizardry if we enable the
 `-fplan9-extensions` option in GCC as documented [here](https://gcc.gnu.org/onlinedocs/gcc/Unnamed-Fields.html).
 
 ```c
