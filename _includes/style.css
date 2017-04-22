@@ -45,11 +45,11 @@ h1:not(:first-child), h2 {
 
 @media screen and (max-width: 44em) {
 	.post, .home, .central-element {
-		width: 70%;
+		width: 92%;
 	}
 
     pre > code {
-        margin-left: -2em;
-        margin-right: -2em;
+        margin-left: -0.5em;
+        margin-right: -0.5em;
     }
 }
