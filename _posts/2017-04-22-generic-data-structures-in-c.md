@@ -244,7 +244,7 @@ qvec_at(iv, 1) = 5;
 qvec_free(iv);
 ```
 
-and compared to similar C++ vector
+and compared similar C++ vector usage
 
 ```c++
 std::vector<int> iv;
@@ -410,17 +410,17 @@ This however fails to compile. Under clang, we get the following error
 ```text
 qvec.c:103:34: error: too many arguments provided to function-like macro
       invocation
-    qvec_push(v, { "strawberry", 1 });
+    qvec_push(v, { "apple", 1 });
                                  ^
 qvec.c:42:9: note: macro 'qvec_push' defined here
 #define qvec_push(v, i)                                                       \
         ^
 qvec.c:103:5: note: cannot use initializer list at the beginning of a macro
       argument
-    qvec_push(v, { "strawberry", 1 });
+    qvec_push(v, { "apple", 1 });
     ^            ~~~~~~~~~~~~~~~~~~~~
 qvec.c:103:5: error: use of undeclared identifier 'qvec_push'
-    qvec_push(v, { "strawberry", 1 });
+    qvec_push(v, { "apple", 1 });
     ^
 ```
 
