@@ -131,7 +131,7 @@ implementation
 ({                                                      \
     if (v->len >= v->cap) {                             \
         v->cap *= 2;                                    \
-        v = realloc(v, sizeof(?) * v->cap * sizeof(?)); \
+        v = realloc(v, sizeof(?) + v->cap * sizeof(?)); \
     }                                                   \
     v->data[v->len++] = (i);                            \
 })
@@ -217,7 +217,7 @@ Now, finally, we can define our `push` function as:
 ({                                                                      \
     if (v->len >= v->cap) {                                             \
         v->cap *= 2;                                                    \
-        v = realloc(v, sizeof(qvec_base) * v->cap * sizeof(*v->data));  \
+        v = realloc(v, sizeof(qvec_base) + v->cap * sizeof(*v->data));  \
     }                                                                   \
     v->data[v->len++] = (i);                                            \
 })
