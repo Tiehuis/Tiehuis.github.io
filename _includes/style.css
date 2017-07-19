@@ -13,12 +13,13 @@ html, body {
     margin-right: auto;
 }
 
-.toc-date {
-    font-family: monospace;
+.toc-title {
+    text-align: center;
+    margin-bottom: 2em;
 }
 
-.toc-entry {
-    margin-bottom: 1.5em;
+.toc-date {
+    font-family: monospace;
 }
 
 .footer {
