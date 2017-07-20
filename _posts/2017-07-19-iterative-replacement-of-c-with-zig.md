@@ -190,11 +190,11 @@ C header files directly. No binding interface needing! In this case, the `use`
 statement will bring all definitions from `compute_helper.h` into the global
 namespace, allowing us to call the `compute_helper` function.
 
-The other important note here is the `export` specifier on our function. This is
-important as it tells zig that it should compile this against the C ABI. This
-means we can call this function from within other C files.
+The other important thing to note here is the `export` specifier on our function.
+This is important as it tells zig that it should compile this against the C ABI.
+This means we can call this function from within other C files.
 
-Since our header files are simple, we can continue using them. Zig does
+Since our header files are simple, we can continue using them unmodified. Zig does
 automatically generate C headers as well however. We can compare these against
 the expected definitions to make sure that we implemented the function
 correctly.
@@ -227,8 +227,8 @@ COMPUTE.ZIG_EXPORT __attribute__((__noreturn__)) void __zig_panic(const uint8_t 
 
 ### Build System Modification
 
-The second step we need to perform now is to modify `build.zig` to compile both
-C and zig files and then link them both together.
+The second step we need to perform is modifying `build.zig` to compile both
+C and zig files and link them together.
 
 #### build.zig
 
