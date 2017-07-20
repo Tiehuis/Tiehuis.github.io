@@ -6,6 +6,7 @@
   <meta name="author" content="Marc Tiehuis">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="history" content="https://github.com/tiehuis/tiehuis.github.io/commits/master/{{ page.path }}">
+  {% feed_meta %}
 
   <title>{{ page.title }}</title>
   <style>
@@ -20,6 +21,9 @@
       <a href="/">home</a>
       -
       <a href="https://github.com/tiehuis/">github</a><br/>
+    </div>
+    <div class="last-modified-at">
+      last modified {{ page.last_modified_at | date: '%F, %X %Z' }}
     </div>
   </div>
 </body>

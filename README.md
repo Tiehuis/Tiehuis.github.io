@@ -2,8 +2,8 @@ Installation
 ------------
 
 ```
-pacman -S ruby
-gem install jekyll redcarpet rouge
+pacman -S ruby npm
+bundle install
 npm -g live-server
 ```
 

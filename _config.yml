@@ -1,2 +1,10 @@
+title: blog
+description: some content is here
+url: https://tiehuis.github.io
+author: Marc Tiehuis
+
 highlighter: rouge
 permalink: /:title
+gems:
+  - jekyll-feed
+  - jekyll-last-modified-at

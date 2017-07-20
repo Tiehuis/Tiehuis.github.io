@@ -8,6 +8,11 @@ html, body {
     margin-bottom: 4em;
 }
 
+.last-modified-at {
+    text-align: center;
+    font-size: xx-small;
+}
+
 .post, .home {
     margin-left: auto;
     margin-right: auto;
@@ -25,7 +30,7 @@ html, body {
 .footer {
     text-align: center;
     margin-top: 3em;
-    margin-bottom: 3em;
+    margin-bottom: 1.5em;
 }
 
 pre > code {
