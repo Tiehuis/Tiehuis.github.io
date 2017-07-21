@@ -5,6 +5,10 @@ layout: default-mathjax
 <div class="post">
   <div class="title">
     <h1 class="content">{{ page.title }}</h1>
+    <div class="published">
+      <time datetime="{{ page.date | date_to_xmlschema }}">
+        {{ page.date | date: '%d %B %Y' }}
+      </time>
   </div>
-  {{ content }}
+{{ page.content }}
 </div>

@@ -4,8 +4,12 @@ html, body {
 }
 
 .title {
-    text-align: center;
+    text-align: right;
     margin-bottom: 4em;
+}
+
+.title > h1 {
+    margin-bottom: 0.1em;
 }
 
 .last-modified-at {
@@ -36,7 +40,11 @@ html, body {
 pre > code {
     display: block;
     overflow: auto;
-    background-color: #FFFDFC;
+    padding: 0.3em;
+}
+
+code {
+    background-color: snow;
 }
 
 h1:not(:first-child), h2, h3 {
@@ -47,10 +55,18 @@ h1:not(:first-child), h2, h3 {
 	.post, .home, .central-element {
 		width: 50em;
 	}
+
+    .title {
+        text-align: right;
+    }
 }
 
 @media screen and (max-width: 45em) {
 	.post, .home, .central-element {
 		width: 92%;
 	}
+
+    .title {
+        text-align: center;
+    }
 }
