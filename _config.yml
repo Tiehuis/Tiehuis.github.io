@@ -3,7 +3,11 @@ description: some content is here
 url: https://tiehuis.github.io
 author: Marc Tiehuis
 
-highlighter: rouge
+highlighter: kramdown
+kramdown:
+  syntax_highlighter_opts:
+    disable: true
+
 permalink: /:title
 gems:
   - jekyll-feed
