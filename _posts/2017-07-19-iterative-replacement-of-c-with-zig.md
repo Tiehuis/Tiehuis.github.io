@@ -202,25 +202,25 @@ correctly.
 #### zig-cache/compute.zig.h
 
 ```c
-#ifndef COMPUTE.ZIG_COMPUTE.ZIG_H
-#define COMPUTE.ZIG_COMPUTE.ZIG_H
+#ifndef COMPUTE_2E_ZIG_H
+#define COMPUTE_2E_ZIG_H
 
 #include <stdint.h>
 
 #ifdef __cplusplus
-#define COMPUTE.ZIG_EXTERN_C extern "C"
+#define COMPUTE_2E_ZIG_EXTERN_C extern "C"
 #else
-#define COMPUTE.ZIG_EXTERN_C
+#define COMPUTE_2E_ZIG_EXTERN_C
 #endif
 
 #if defined(_WIN32)
-#define COMPUTE.ZIG_EXPORT COMPUTE.ZIG_EXTERN_C __declspec(dllimport)
+#define COMPUTE_2E_ZIG_EXPORT COMPUTE_2E_ZIG_EXTERN_C __declspec(dllimport)
 #else
-#define COMPUTE.ZIG_EXPORT COMPUTE.ZIG_EXTERN_C __attribute__((visibility ("default")))
+#define COMPUTE_2E_ZIG_EXPORT COMPUTE_2E_ZIG_EXTERN_C __attribute__((visibility ("default")))
 #endif
 
-COMPUTE.ZIG_EXPORT uint8_t compute(uint8_t a);
-COMPUTE.ZIG_EXPORT __attribute__((__noreturn__)) void __zig_panic(const uint8_t * message_ptr, uintptr_t message_len);
+COMPUTE_2E_ZIG_EXPORT uint8_t compute(uint8_t a);
+COMPUTE_2E_ZIG_EXPORT __attribute__((__noreturn__)) void __zig_panic(const uint8_t * message_ptr, uintptr_t message_len);
 
 #endif
 ```
@@ -276,7 +276,7 @@ the local directory.
 
 ```text
 $ zig build --verbose
-zig build_obj compute.zig --cache-dir zig-cache --output zig-cache/compute.zig.o \
+zig build-obj compute.zig --cache-dir zig-cache --output zig-cache/compute.zig.o \
     --output-h zig-cache/compute.zig.h --name compute.zig -isystem .
 cc -c compute_helper.c -o zig-cache/compute_helper.c.o -std=c99 -I zig-cache
 cc -c display.c -o zig-cache/display.c.o -std=c99 -I zig-cache
@@ -322,9 +322,9 @@ The only other changes are removing `display.c` from the C sources, and adding
 
 ```text
 $ zig build --verbose
-zig build_obj compute.zig --cache-dir zig-cache --output zig-cache/compute.zig.o \
+zig build-obj compute.zig --cache-dir zig-cache --output zig-cache/compute.zig.o \
     --output-h zig-cache/compute.zig.h --name compute.zig -isystem .
-zig build_obj display.zig --cache-dir zig-cache --output zig-cache/display.zig.o \
+zig build-obj display.zig --cache-dir zig-cache --output zig-cache/display.zig.o \
     --output-h zig-cache/display.zig.h --name display.zig -isystem .
 cc -c compute_helper.c -o zig-cache/compute_helper.c.o -std=c99 -nostdlib -I zig-cache -I zig-cache
 cc -c main.c -o zig-cache/main.c.o -std=c99 -nostdlib -I zig-cache -I zig-cache
@@ -369,11 +369,11 @@ export fn compute(a: u8) -> u8 {
 
 ```text
 $ zig build --verbose
-zig build_obj compute.zig --cache-dir zig-cache --output zig-cache/compute.zig.o \
+zig build-obj compute.zig --cache-dir zig-cache --output zig-cache/compute.zig.o \
     --output-h zig-cache/compute.zig.h --name compute.zig -isystem .
-zig build_obj compute_helper.zig --cache-dir zig-cache --output zig-cache/compute_helper.zig.o \
+zig build-obj compute_helper.zig --cache-dir zig-cache --output zig-cache/compute_helper.zig.o \
     --output-h zig-cache/compute_helper.zig.h --name compute_helper.zig -isystem .
-zig build_obj display.zig --cache-dir zig-cache --output zig-cache/display.zig.o \
+zig build-obj display.zig --cache-dir zig-cache --output zig-cache/display.zig.o \
     --output-h zig-cache/display.zig.h --name display.zig -isystem .
 cc -c main.c -o zig-cache/main.c.o -std=c99 -nostdlib -I zig-cache -I zig-cache -I zig-cache
 cc zig-cache/compute.zig.o zig-cache/compute_helper.zig.o zig-cache/display.zig.o \
@@ -425,7 +425,7 @@ explicitly.
 
 ```text
 $ zig build --verbose
-zig build_exe main.zig --cache-dir zig-cache --output main --name main
+zig build-exe main.zig --cache-dir zig-cache --output main --name main
 
 ./main
 G
