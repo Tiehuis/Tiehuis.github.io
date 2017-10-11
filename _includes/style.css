@@ -4,6 +4,10 @@ html, body {
     line-height: 1.5;
 }
 
+h3, h4, h5 {
+    color: #2d58b7;
+}
+
 .title {
     text-align: right;
     margin-bottom: 4em;
