@@ -271,9 +271,6 @@ respectively, and are comparable as non-tuned generic implementations.
 ```
 Architecture:        x86_64
 Model name:          Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz
-CPU MHz:             3334.836
-CPU max MHz:         3600.0000
-CPU min MHz:         800.0000
 ```
 
 #### Compiler Versions
