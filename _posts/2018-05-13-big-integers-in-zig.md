@@ -48,7 +48,7 @@ allocation](https://gmplib.org/manual/Custom-Allocation.html)
 functions, but which are shared across the all objects. Only one
 set of memory functions can be used per program.
 
-# Handling OOM
+## Handling OOM
 
 One issue with GMP is that out-of-memory conditions cannot easily be handled.
 The only feasible way in-process way is to override the allocation functions and
