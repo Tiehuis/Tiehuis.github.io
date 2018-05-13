@@ -304,7 +304,7 @@ fib-rs:  0:00.81 real, 0.81 user, 0.00 sys
 Computes the 50,000th factorial.
 
 Zig uses naive multiplication only while all others use asymptotically faster
-algorithms (such as (karatsuba multiplication)[https://en.wikipedia.org/wiki/Karatsuba_algorithm]).
+algorithms such as (karatsuba multiplication)[https://en.wikipedia.org/wiki/Karatsuba_algorithm].
 
 ```
 fac-zig: 0:00.54 real, 0.54 user, 0.00 sys
