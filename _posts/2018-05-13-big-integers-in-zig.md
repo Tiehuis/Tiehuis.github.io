@@ -13,7 +13,7 @@ I'll list a few nice features about Zig which I think suit this sort of library
 before exploring some preliminary performance comparisons and what in the
 language encourages the speed.
 
-# Transparent Local Allocators
+## Transparent Local Allocators
 
 Unlike most languages, the Zig standard library does not have a default
 allocator implementation. Instead, allocators are specified at runtime, passed
@@ -72,7 +72,7 @@ provided syntax makes this minimal boilerplate, and unlike GMP we
 can at least see where something could go wrong and not have to rely on hidden
 error control flow.
 
-# Compile-time switch functions
+## Compile-time switch functions
 
 Zig provides a fair amount of compile-time support. A particular feature is the
 ability to pass an arbitrary type `var` to a function. This gives a duck-typing
@@ -103,7 +103,7 @@ This feature is used to combine `set` functions into a [single function](https:/
 instead of needing a variety of functions for each type as in GMP (`mpz_set_ui`,
 `mpz_set_si`, ...).
 
-# Peformance
+## Peformance
 
 Perhaps the most important detail of a big integer library is its raw
 performance. I'll walk through the low-level addition routine and look at some
@@ -170,7 +170,7 @@ to less heavily optimized libraries. We are comparing the debug runtime version
 as well since I consider it important that it runs reasonably quick for a good
 development cycle, and not orders of magnitude slower.
 
-## Leveraging Compiler Addition Builtins
+### Leveraging Compiler Addition Builtins
 
 Zig provides a number of LLVM builtins to us. While these shouldn't
 usually be required, they can be valuable in certain cases. We'll be using the
@@ -212,7 +212,7 @@ fib-zig: 0:00.69 real, 0.69 user, 0.00 sys
 
 A minimal, but noticeable improvement.
 
-## Improving Debug Performance
+### Improving Debug Performance
 
 Debug mode in Zig performs runtime bounds checks which include array checks and other
 checks for possible [undefined behavior](https://ziglang.org/documentation/master/#Undefined-Behavior).
@@ -235,7 +235,7 @@ fib-zig: 0:00.69 real, 0.69 user, 0.00 sys
 
 That is a lot better.
 
-## 64-bit limbs (and 128-bit integers).
+### 64-bit limbs (and 128-bit integers).
 
 We have been using 32-bit words this entire time. Our machine word-size however
 is 64-bits. Lets change our limb size only, and rerun our tests.
@@ -257,11 +257,11 @@ need to be done which can be much less performant.
 Benchmark code [here](https://github.com/tiehuis/zig-bn/tree/master/bench).
 
 A performance comparison using the following libraries/languages:
-    - [zig-bn](https://github.com/tiehuis/zig-bn)
-    - [GMP](https://gmplib.org/)
-    - [golang](https://golang.org/pkg/math/big/)
-    - [cpython](https://github.com/python/cpython/blob/master/Objects/longobject.c)
-    - [rust](https://github.com/rust-num/num-bigint)
+ - [zig-bn](https://github.com/tiehuis/zig-bn)
+ - [GMP](https://gmplib.org/)
+ - [golang](https://golang.org/pkg/math/big/)
+ - [cpython](https://github.com/python/cpython/blob/master/Objects/longobject.c)
+ - [rust](https://github.com/rust-num/num-bigint)
 
  - C and Go use assembly. 
  - Rust/CPython both are implemented in Rust/C respectively, and are comparable
