@@ -259,13 +259,12 @@ Benchmark code [here](https://github.com/tiehuis/zig-bn/tree/master/bench).
 A performance comparison using the following libraries/languages:
  - [zig-bn](https://github.com/tiehuis/zig-bn)
  - [GMP](https://gmplib.org/)
- - [golang](https://golang.org/pkg/math/big/)
- - [cpython](https://github.com/python/cpython/blob/master/Objects/longobject.c)
- - [rust](https://github.com/rust-num/num-bigint)
+ - [Go](https://golang.org/pkg/math/big/)
+ - [CPython](https://github.com/python/cpython/blob/master/Objects/longobject.c)
+ - [Rust-num](https://github.com/rust-num/num-bigint)
 
- - C and Go use assembly. 
- - Rust/CPython both are implemented in Rust/C respectively, and are comparable
-   as non-tuned generic implementations.
+Note that C and Go use assembly, while Rust/CPython both are implemented in Rust and C
+respectively, and are comparable as non-tuned generic implementations.
 
 #### System Info
 
