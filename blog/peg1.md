@@ -1,5 +1,5 @@
 # PEG Grammar for Chord Notation
-<div class="published"><time>17 Dec 2017</time></div>
+<div class="published"><time datetime="2017-12-17">17 Dec 2017</time></div>
 
 Recently I was looking for a grammar to catagorize music chords but was
 surprised that there weren't any decent ones around.

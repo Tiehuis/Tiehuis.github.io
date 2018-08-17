@@ -1,5 +1,5 @@
 # Big Integers in Zig
-<div class="published"><time>13 May 2018</time></div>
+<div class="published"><time datetime="2018-05-13">13 May 2018</time></div>
 
 I've recently been writing a big-integer library, [zig-bn](https://github.com/tiehuis/zig-bn)
 in the [Zig](https://ziglang.org/) programming language.

@@ -1,5 +1,5 @@
 # Iterative Replacement of C with Zig
-<div class="published"><time>19 Jul 2017</time></div>
+<div class="published"><time datetime="2017-07-19">19 Jul 2017</time></div>
 
 [Zig](http://ziglang.org/) is a programming language in a similar realm as C.
 Being more modern, it has a number of useful constructs such as sum types,

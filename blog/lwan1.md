@@ -1,5 +1,5 @@
 # Lwan Api Intro
-<div class="published"><time>16 Feb 2017</time></div>
+<div class="published"><time datetime="2017-02-16">16 Feb 2017</time></div>
 
 *<small>See [this](https://github.com/tiehuis/lwan-api-example) repository for
 a complete example project.</small>*
