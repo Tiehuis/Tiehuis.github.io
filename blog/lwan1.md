@@ -1,7 +1,5 @@
----
-title: Lwan API intro
-layout: post
----
+# Lwan Api Intro
+<div class="published"><time>16 Feb 2017</time></div>
 
 *<small>See [this](https://github.com/tiehuis/lwan-api-example) repository for
 a complete example project.</small>*

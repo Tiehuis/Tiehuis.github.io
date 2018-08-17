@@ -1,0 +1,12 @@
+```
+make
+# or
+make watch
+```
+
+# Dependencies
+
+ - [cmark](https://github.com/commonmark/cmark)
+ - make (GNU)
+ - bash
+ - inotify (optional)

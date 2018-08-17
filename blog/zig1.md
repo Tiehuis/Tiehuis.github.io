@@ -1,7 +1,5 @@
----
-title: Iterative Replacement of C with Zig
-layout: post
----
+# Iterative Replacement of C with Zig
+<div class="published"><time>19 Jul 2017</time></div>
 
 [Zig](http://ziglang.org/) is a programming language in a similar realm as C.
 Being more modern, it has a number of useful constructs such as sum types,

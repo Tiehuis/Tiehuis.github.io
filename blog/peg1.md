@@ -1,7 +1,5 @@
----
-title: PEG Grammar for Chord Notation
-layout: post
----
+# PEG Grammar for Chord Notation
+<div class="published"><time>17 Dec 2017</time></div>
 
 Recently I was looking for a grammar to catagorize music chords but was
 surprised that there weren't any decent ones around.

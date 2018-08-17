@@ -1,17 +1,64 @@
----
-layout: default
-title: blog
----
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="author" content="Marc Tiehuis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <title>blog</title>
 
-<div class="home">
-  <h1 class="toc-title">Posts</h1>
-  <ul class="toc">
-    {% for post in site.posts %}
-    <li class="toc-entry">
-      <span class="toc-date">{{ post.date | date_to_string }}</span>
-      <span class="toc-separator"> &nbsp; &nbsp; </span>
-      <span class="toc-content"><a href="{{ post.url }}">{{ post.title }}</a></span>
-    </li>
-    {% endfor %}
-  </ul>
-</div>
+<style>
+    html, body {
+        font-family: sans-serif;
+        font-size: small;
+        line-height: 1.5;
+    }
+    ul {
+        list-style-type: none;
+    }
+    .home {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .title {
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    .point {
+        font-family: monospace;
+        padding-right: 2em;
+    }
+    .footer {
+        text-align: center;
+        margin-top: 3em;
+        margin-bottom: 1.5em;
+    }
+    @media screen and (min-width: 45em) {
+        .home, .central-element {
+            width: 50em;
+        }
+    }
+    @media screen and (max-width: 45em) {
+        .home, .central-element {
+            width: 92%;
+        }
+    }
+</style>
+
+    <body>
+        <div class="home">
+            <h1 class="title">blog</h1>
+            <ul>
+                <li><span class="point">13 May 2018</span><a href="./blog/zig2">Big Integers in Zig</a></li>
+                <li><span class="point">17 Dec 2017</span><a href="./blog/peg1">PEG Grammar for Chord Notation</a></li>
+                <li><span class="point">19 Jul 2017</span><a href="./blog/zig1">Iterative Replacement of C with Zig</a></li>
+                <li><span class="point">22 Apr 2017</span><a href="./blog/c1">Generic Data Structures in C</a></li>
+                <li><span class="point">16 Feb 2017</span><a href="./blog/lwan1">Lwan API Intro</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <a href="/">home</a> - <a href="https://github.com/tiehuis/">github</a> <!-- - <a href="/feed.xml">rss</a> --> <br/>
+        </div>
+    </body>
+</html>

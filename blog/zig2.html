@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="author" content="Marc Tiehuis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>blog</title>
+        <style>
+html, body {
+    font-family: sans-serif;
+    font-size: small;
+    line-height: 1.5;
+}
+
+h1, h2, h3 {
+    margin-top: 2em;
+}
+
+h3, h4, h5 {
+    color: #2d58b7;
+}
+
+h1:nth-of-type(1) {
+    margin-top: 0.7em;
+    margin-bottom: 0em;
+    text-align: right;
+}
+
+.published {
+    margin-bottom: 4em;
+    text-align: right;
+}
+
+.post, .home {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.home-link {
+    float:left;
+    margin-top: 0.7em;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 3em;
+    margin-bottom: 1.5em;
+}
+
+pre > code {
+    display: block;
+    overflow: auto;
+    padding: 0.3em;
+}
+
+code {
+    background-color: snow;
+    font-size: 13px;
+}
+
+@media screen and (min-width: 45em) {
+	.post, .home, .central-element {
+		width: 50em;
+	}
+}
+
+@media screen and (max-width: 45em) {
+	.post, .home, .central-element {
+		width: 92%;
+	}
+
+    code {
+        font-size: small;
+    }
+}
+        </style>
+    </head>
+    <body>
+        <div class="post">
+            <div class="home-link"><a href="../index.html">home</a></div>
+<h1>Big Integers in Zig</h1>
+<div class="published"><time>13 May 2018</time></div>
+<p>I’ve recently been writing a big-integer library, <a href="https://github.com/tiehuis/zig-bn">zig-bn</a>
+in the <a href="https://ziglang.org/">Zig</a> programming language.</p>
+<p>The goal is to have reasonable performance in a fairly simple implementation
+with a generic implementation with no assembly routines.</p>
+<p>I’ll list a few nice features about Zig which I think suit this sort of library
+before exploring some preliminary performance comparisons and what in the
+language encourages the speed.</p>
+<h2>Transparent Local Allocators</h2>
+<p>Unlike most languages, the Zig standard library does not have a default
+allocator implementation. Instead, allocators are specified at runtime, passed
+as arguments to parts of the program which require it. I’ve used the same idea
+with this big integer library.</p>
+<p>The nice thing about this is it is very easy to use different allocators on a
+per-integer level. A practical example may be to use a faster stack-based
+allocator for small temporaries, which can be bounded by some upper limit.</p>
+<pre><code>// Allocate an integer on the heap
+var heap_allocator = std.heap.c_allocator;
+var a = try BigInt.init(heap_allocator);
+defer a.deinit();
+
+// ... and one on the stack
+var stack_allocator = std.debug.global_allocator;
+var b = try BigInt.init(stack_allocator);
+defer b.deinit();
+
+// ... and some in a shared arena with shared deallocation
+var arena = ArenaAllocator.init(heap_allocator);
+defer arena.deinit();
+
+var c = try BigInt.init(&amp;arena.allocator);
+var d = try BigInt.init(&amp;arena.allocator);
+</code></pre>
+<p>This isn’t possible in <a href="https://gmplib.org/">GMP</a>, which allows <a href="https://gmplib.org/manual/Custom-Allocation.html">specifying custom
+allocation</a>
+functions, but which are shared across the all objects. Only one
+set of memory functions can be used per program.</p>
+<h2>Handling OOM</h2>
+<p>One issue with GMP is that out-of-memory conditions cannot easily be handled.
+The only feasible way in-process way is to override the allocation functions and
+use exceptions in C++, or longjmp back to a clean-up function which can attempt
+to handle this as best as it can.</p>
+<p>Since Zig was designed to handle allocation in a different way to C, we can
+handle these much more easily. For any operation that could fail (either
+out-of-memory or some other generic error), we can handle the error or pass it
+back up the call-stack.</p>
+<pre><code>var a = try BigInt.init(failing_allocator);
+// maybe got an out-of-memory! if we did, lets pass it back to the caller
+try a.set(0x123294781294871290478129478);
+</code></pre>
+<p>There is the small detriment that it is required to explicitly handle possible
+failing functions (and for zig-bn, that is practically all of them). The
+provided syntax makes this minimal boilerplate, and unlike GMP we
+can at least see where something could go wrong and not have to rely on hidden
+error control flow.</p>
+<h2>Compile-time switch functions</h2>
+<p>Zig provides a fair amount of compile-time support. A particular feature is the
+ability to pass an arbitrary type <code>var</code> to a function. This gives a duck-typing
+sort of feature and can provide more fluent interfaces than we otherwise could
+write.</p>
+<p>For example:</p>
+<pre><code>pub fn plusOne(x: var) @typeOf(x) {
+    const T = @typeOf(x);
+
+    switch (@typeInfo(T)) {
+        TypeId.Int =&gt; {
+            return x + 1;
+        },
+        TypeId.Float =&gt; {
+            return x + 1.0;
+        },
+        else =&gt; {
+            @compileError(&quot;can't handle this type, sorry!&quot;);
+        },
+    }
+}
+</code></pre>
+<p>This feature is used to combine <code>set</code> functions into a <a href="https://github.com/tiehuis/zig-bn/blob/8691da48134b029c26df5fd26ddf07b78b90bca3/bigint.zig#L104">single function</a>
+instead of needing a variety of functions for each type as in GMP (<code>mpz_set_ui</code>,
+<code>mpz_set_si</code>, …).</p>
+<h2>Peformance</h2>
+<p>Perhaps the most important detail of a big integer library is its raw
+performance. I’ll walk through the low-level addition routine and look at some
+techniques we can use to speed it up incrementally.</p>
+<p>The benchmarks used here can be found in this <a href="https://github.com/tiehuis/zig-bn/tree/8691da48134b029c26df5fd26ddf07b78b90bca3/bench">repository</a>.
+We simply compute the 50000’th fibonacci number. This requires addition and
+subtraction only.</p>
+<p>Our initial naive implementation is as follows. It uses 32-bit limbs (so our
+double-limb is a 64-bit integer) and simply propagates the carry. We force
+inline the per-limb division and our debug asserts are compiled out in release
+mode. Memory allocation is handled in the calling function.</p>
+<pre><code>// a + b + *carry, sets carry to overflow bits
+fn addLimbWithCarry(a: Limb, b: Limb, carry: &amp;Limb) Limb {
+    const result = DoubleLimb(a) + DoubleLimb(b) + DoubleLimb(*carry);
+    *carry = @truncate(Limb, result &gt;&gt; Limb.bit_count);
+    return @truncate(Limb, result);
+}
+
+fn lladd(r: []Limb, a: []const Limb, b: []const Limb) void {
+    debug.assert(a.len != 0 and b.len != 0);
+    debug.assert(a.len &gt;= b.len);
+    debug.assert(r.len &gt;= a.len + 1);
+
+    var i: usize = 0;
+    var carry: Limb = 0;
+
+    while (i &lt; b.len) : (i += 1) {
+        r[i] = @inlineCall(addLimbWithCarry, a[i], b[i], &amp;carry);
+    }
+
+    while (i &lt; a.len) : (i += 1) {
+        r[i] = @inlineCall(addLimbWithCarry, a[i], 0, &amp;carry);
+    }
+
+    r[i] = carry;
+}
+</code></pre>
+<p>The results are as follows:</p>
+<pre><code>fib-zig: 0:00.75 real, 0.75 user, 0.00 sys
+  debug: 0:06.61 real, 6.60 user, 0.00 sys
+</code></pre>
+<p>For comparison, the GMP run time is:</p>
+<pre><code>fib-c:   0:00.17 real, 0.17 user, 0.00 sys
+</code></pre>
+<p>A more comparable C implementation (python) is:</p>
+<pre><code>fib-py:  0:00.77 real, 0.77 user, 0.00 sys
+</code></pre>
+<p>A bit of work to do against GMP! We aren’t out of the ballpark compared
+to less heavily optimized libraries. We are comparing the debug runtime version
+as well since I consider it important that it runs reasonably quick for a good
+development cycle, and not orders of magnitude slower.</p>
+<h3>Leveraging Compiler Addition Builtins</h3>
+<p>Zig provides a number of LLVM builtins to us. While these shouldn’t
+usually be required, they can be valuable in certain cases. We’ll be using the
+<a href="https://ziglang.org/documentation/master/#addWithOverflow"><code>@addWithOverflow</code></a>
+builtin to perform addition while catching possible overflow.</p>
+<p>Our new addition routine is now:</p>
+<pre><code>fn lladd(r: []Limb, a: []const Limb, b: []const Limb) void {
+    debug.assert(a.len != 0 and b.len != 0);
+    debug.assert(a.len &gt;= b.len);
+    debug.assert(r.len &gt;= a.len + 1);
+
+    var i: usize = 0;
+    var carry: Limb = 0;
+
+    while (i &lt; b.len) : (i += 1) {
+        var c: Limb = 0;
+        c += Limb(@addWithOverflow(Limb, a[i], b[i], &amp;r[i]));
+        c += Limb(@addWithOverflow(Limb, r[i], carry, &amp;r[i]));
+        carry = c;
+    }
+
+    while (i &lt; a.len) : (i += 1) {
+        carry = Limb(@addWithOverflow(Limb, a[i], carry, &amp;r[i]));
+    }
+
+    r[i] = carry;
+}
+</code></pre>
+<p>The new results:</p>
+<pre><code>fib-zig: 0:00.69 real, 0.69 user, 0.00 sys
+  debug: 0:06.47 real, 6.42 user, 0.00 sys
+</code></pre>
+<p>A minimal, but noticeable improvement.</p>
+<h3>Improving Debug Performance</h3>
+<p>Debug mode in Zig performs runtime bounds checks which include array checks and other
+checks for possible <a href="https://ziglang.org/documentation/master/#Undefined-Behavior">undefined behavior</a>.</p>
+<p>For these inner loops this is a lot of overhead. Our assertions are sufficient
+to cover all the looping cases. We can disable these safety checks on
+a per-block basis:</p>
+<pre><code>fn lladd(r: []Limb, a: []const Limb, b: []const Limb) void {
+    @setRuntimeSafety(false);
+    ...
+}
+</code></pre>
+<pre><code>fib-zig: 0:00.69 real, 0.69 user, 0.00 sys
+  debug: 0:03.91 real, 3.90 user, 0.00 sys
+</code></pre>
+<p>That is a lot better.</p>
+<h3>64-bit limbs (and 128-bit integers).</h3>
+<p>We have been using 32-bit words this entire time. Our machine word-size however
+is 64-bits. Lets change our limb size only, and rerun our tests.</p>
+<pre><code>fib-zig: 0:00.35 real, 0.35 user, 0.00 sys
+  debug: 0:01.95 real, 1.95 user, 0.00 sys
+</code></pre>
+<p>Unsurprisingly, this is now twice as fast! It is fairly useful if your compiler
+supports builtin 128-bit integer types when using 64-bit limbs. The reason is it
+makes handling overflow in addition and especially multiplication much more
+simple and easier to optimize by the compiler. Otherwise, <a href="https://github.com/v8/v8/blob/6.8.137/src/objects/bigint.cc#L2331">software
+workarounds</a>
+need to be done which can be much less performant.</p>
+<h2>Implementation Performance Summary</h2>
+<p>Benchmark code <a href="https://github.com/tiehuis/zig-bn/tree/master/bench">here</a>.</p>
+<p>A performance comparison using the following libraries/languages:</p>
+<ul>
+<li><a href="https://github.com/tiehuis/zig-bn">zig-bn</a></li>
+<li><a href="https://gmplib.org/">GMP</a></li>
+<li><a href="https://golang.org/pkg/math/big/">Go</a></li>
+<li><a href="https://github.com/python/cpython/blob/master/Objects/longobject.c">CPython</a></li>
+<li><a href="https://github.com/rust-num/num-bigint">Rust-num</a></li>
+</ul>
+<p>Note that C and Go use assembly, while Rust/CPython both are implemented in Rust and C
+respectively, and are comparable as non-tuned generic implementations.</p>
+<h4>System Info</h4>
+<pre><code>Architecture:        x86_64
+Model name:          Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz
+</code></pre>
+<h4>Compiler Versions</h4>
+<pre><code>zig:  0.2.0.ef3111be
+gcc:  gcc (GCC) 8.1.0
+go:   go version go1.10.2 linux/amd64
+py:   Python 3.6.5
+rust: rustc 1.25.0 (84203cac6 2018-03-25)
+</code></pre>
+<h3>Addition/Subtraction Test</h3>
+<p>Computes the 50,000th fibonacci number.</p>
+<pre><code>fib-zig: 0:00.35 real, 0.35 user, 0.00 sys
+fib-c:   0:00.17 real, 0.17 user, 0.00 sys
+fib-go:  0:00.20 real, 0.20 user, 0.00 sys
+fib-py:  0:00.75 real, 0.75 user, 0.00 sys
+fib-rs:  0:00.81 real, 0.81 user, 0.00 sys
+</code></pre>
+<h3>Multiplication/Addition Test</h3>
+<p>Computes the 50,000th factorial.</p>
+<p>Zig uses naive multiplication only while all others use asymptotically faster
+algorithms such as <a href="https://en.wikipedia.org/wiki/Karatsuba_algorithm">karatsuba multiplication</a>.</p>
+<pre><code>fac-zig: 0:00.54 real, 0.54 user, 0.00 sys
+fac-c:   0:00.18 real, 0.18 user, 0.00 sys
+fac-go:  0:00.21 real, 0.21 user, 0.00 sys
+fac-py:  0:00.50 real, 0.48 user, 0.02 sys
+fac-rs:  0:00.53 real, 0.53 user, 0.00 sys
+</code></pre>
+<h3>Division Test (single-limb)</h3>
+<p>Computes the 20,000th factorial then divides it back down to 1.</p>
+<p>Rust is most likely much slower since it <a href="https://github.com/rust-num/num-bigint/blob/master/src/algorithms.rs#L420">doesn’t special-case</a>
+length 1 limbs.</p>
+<pre><code>facdiv-zig: 0:00.99 real, 0.98 user, 0.00 sys
+facdiv-c:   0:00.16 real, 0.16 user, 0.00 sys
+facdiv-go:  0:00.93 real, 0.93 user, 0.00 sys
+facdiv-py:  0:00.99 real, 0.99 user, 0.00 sys
+facdiv-rs:  0:05.01 real, 4.98 user, 0.00 sys
+</code></pre>
+<h2>Summary</h2>
+<p>In short, zig-bn has managed to get fairly good performance from a pretty simple
+implementation. It is twice as fast as other generic libraries for the functions
+we have optimized, and is likely to be similarly fast using comparable
+algorithms for multiplication/division.</p>
+<p>While I consider these good results for a very simple implementation (&lt;1k loc,
+excluding tests) it is still lacking vs. GMP. Most notably, the algorithms used
+are much more advanced and the gap would continue to grow as numbers grew even
+larger. Hats off to the GMP project, as always.</p>
+<p>A good start for a weeks work.</p>
+        </div>
+
+        <div class="footer">
+            <a href="/">home</a> - <a href="https://github.com/tiehuis/">github</a> <!-- - <a href="/feed.xml">rss</a> --> <br/>
+        </div>
+    </body>
+</html>

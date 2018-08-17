@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="author" content="Marc Tiehuis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>blog</title>
+        <style>
+html, body {
+    font-family: sans-serif;
+    font-size: small;
+    line-height: 1.5;
+}
+
+h1, h2, h3 {
+    margin-top: 2em;
+}
+
+h3, h4, h5 {
+    color: #2d58b7;
+}
+
+h1:nth-of-type(1) {
+    margin-top: 0.7em;
+    margin-bottom: 0em;
+    text-align: right;
+}
+
+.published {
+    margin-bottom: 4em;
+    text-align: right;
+}
+
+.post, .home {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.home-link {
+    float:left;
+    margin-top: 0.7em;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 3em;
+    margin-bottom: 1.5em;
+}
+
+pre > code {
+    display: block;
+    overflow: auto;
+    padding: 0.3em;
+}
+
+code {
+    background-color: snow;
+    font-size: 13px;
+}
+
+@media screen and (min-width: 45em) {
+	.post, .home, .central-element {
+		width: 50em;
+	}
+}
+
+@media screen and (max-width: 45em) {
+	.post, .home, .central-element {
+		width: 92%;
+	}
+
+    code {
+        font-size: small;
+    }
+}
+        </style>
+    </head>
+    <body>
+        <div class="post">
+            <div class="home-link"><a href="../index.html">home</a></div>
+<h1>Generic Data Structures in C</h1>
+<div class="published"><time>22 April 2017</time></div>
+<p><small><em>See <a href="https://gist.github.com/tiehuis/6e10dfa4a36c1f414b3119dd1b77fa6b">here</a>
+for a final implementation if you don’t want to read all this.</em></small></p>
+<p>Generic data structures in C typically have a pretty unfriendly API. They
+either rely on void pointers and erase type information, or resort to macros
+to provide a semblance of the templating system found in C++.</p>
+<p>This post will look at constructing a macro-based vector in C with a focus on
+ease of use. We will use modern C11 features and ample compiler extensions to
+see where we can take this.</p>
+<h2>A Generic Vector</h2>
+<p>First, lets define our vector type. We’ll call it <code>qvec</code> because its
+short and sweet.</p>
+<pre><code class="language-c">#define qvec(T)             \
+    struct qvec_##T {       \
+        size_t cap, len;    \
+        T data[];           \
+    }
+</code></pre>
+<p>We take a parameter <code>T</code> which will represent the type that is stored in our
+vector. This will be templatized at compile-time, similar to how <code>vector&lt;T&gt;</code> is
+in C++.</p>
+<p>The <code>data</code> field is a <a href="https://en.wikipedia.org/wiki/Flexible_array_member">flexible array
+member</a>
+from C99.</p>
+<p><small><em>Note: We will forgo error checking of <code>malloc</code> and <code>realloc</code>
+for simplicity.</em></small></p>
+<h3><code>new</code></h3>
+<p>The <code>new</code> function should <code>malloc</code> enough memory for some initial members.
+The size of the required storage will depend on the size of <code>T</code>. A possible
+implementation could be</p>
+<pre><code class="language-c">#define qvec_new(T, v)                                       \
+do {                                                         \
+    size_t initial_size = 16;                                \
+    v = malloc(sizeof(qvec(T)) + sizeof(T) * initial_size);  \
+    v-&gt;cap = initial_size;                                   \
+    v-&gt;len = 0;                                              \
+} while (0)
+</code></pre>
+<p>which we can use to initialize a vector of integers as</p>
+<pre><code class="language-c">qvec(int) *v;
+qvec_new(int, v);
+</code></pre>
+<p>The flexible array member allows us to get away with a single call to <code>malloc</code>
+which is a minor nicety. Otherwise, this is a little underwhelming. The
+separation of declaration and initialization is not ideal.</p>
+<p>To make this a bit nicer, we can use <a href="https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement-Exprs">statement expressions</a>
+which allow multiple statements to be evaluated and used as if they were an
+expression. Our new definition for <code>new</code> would then be</p>
+<pre><code class="language-c">#define qvec_new(T)                                                           \
+({                                                                            \
+    const size_t initial_size = 16;                                           \
+    struct qvec_##T *v = malloc(sizeof(qvec(T)) + sizeof(T) * initial_size);  \
+    v-&gt;cap = initial_size;                                                    \
+    v-&gt;len = 0;                                                               \
+    v;                                                                        \
+})
+</code></pre>
+<p>which gives us the much more natural usage</p>
+<pre><code class="language-c">qvec(int) *v = qvec_new(int);
+</code></pre>
+<h2>Standard Functions</h2>
+<p>Lets now implement the common vector functions <code>push</code>, <code>pop</code> and <code>at</code>.</p>
+<h3><code>pop</code></h3>
+<p><code>pop</code> doesn’t require any special knowledge of the type <code>T</code> so this is simply</p>
+<pre><code class="language-c">#define qvec_pop(v) (v-&gt;data[--v-&gt;len])
+</code></pre>
+<h3><code>at</code></h3>
+<p><code>at</code> is slightly more interesting. When working with a C++ vector (or a
+standard C array), the notation <code>array[x]</code> is an <code>lvalue</code> which can be
+assigned to. It would be nice if our <code>qvec</code> has this property as well.</p>
+<p>First, lets define the helper function</p>
+<pre><code class="language-c">#define qvec_ref(v, i) (&amp;v-&gt;data[i])
+</code></pre>
+<p>This returns an <code>lvalue</code> and so can be used with a pointer dereference. e.g.
+<code>*qvec_ref(v, i) = 5</code>.</p>
+<p>We can wrap this in another macro to hide this dereference</p>
+<pre><code class="language-c">#define qvec_at(v, i) (*(qvec_ref(v, i)))
+</code></pre>
+<h3><code>push</code></h3>
+<p><code>push</code> presents a small problem. If we were to generate a standard
+implementation</p>
+<pre><code class="language-c">#define qvec_push(v, i)                                 \
+({                                                      \
+    if (v-&gt;len &gt;= v-&gt;cap) {                             \
+        v-&gt;cap *= 2;                                    \
+        v = realloc(v, sizeof(?) + v-&gt;cap * sizeof(?)); \
+    }                                                   \
+    v-&gt;data[v-&gt;len++] = (i);                            \
+})
+</code></pre>
+<p>we might be left wondering what to insert into the <code>?</code> marked locations.</p>
+<p>The second <code>?</code> is less worrying. This should be <code>sizeof(T)</code>. We could just pass
+the type again, but doing it on every push is not ideal. In fact, we don’t need
+any new information. Recall that the <code>data</code> field of <code>qvec</code> is of type <code>T[]</code>.
+Performing a dereference of this will give us the size of a single <code>T</code>, exactly
+what we want!</p>
+<p>The first <code>?</code> is more bothersome. We are interested in determining the value of
+<code>sizeof(qvec(T))</code>. We can’t use the <code>data</code> field here, since the <code>T</code> required
+here is the actual typename used during initialization. This would be viable if
+it were possible to generate a type name from an arbitrary variable but
+unfortunately we cannot do this.</p>
+<p>The way to get this size is first to realise that the <code>data</code> member in a <code>qvec</code>
+doesn’t actually take up any space within the array, not even for a pointer.</p>
+<p>We can confirm this by checking the following</p>
+<pre><code class="language-c">struct {
+    char a, b;
+    char b[]
+} foo;
+
+printf(&quot;foo is %zu bytes\n&quot;, sizeof(foo));
+</code></pre>
+<p>which will print</p>
+<pre><code>foo is 2 bytes
+</code></pre>
+<p>Since this <code>data</code> doesn’t take any space, we can see that the other members
+(<code>len</code> and <code>cap</code>) have a fixed type and therefore size, regardless of the type
+of <code>T</code>.</p>
+<p>We can separate the type of <code>qvec</code> into</p>
+<pre><code class="language-c">#define qvec_base       \
+    struct {            \
+        size_t cap, len;\
+    }
+
+#define qvec(T)         \
+    struct qvec_##T {   \
+        qvec_base;      \
+        T data[];       \
+    }
+</code></pre>
+<p>This now allows us to query the size of the type-independent part of a <code>qvec</code>
+while retaining access to all the members in the same way.</p>
+<p>As an aside, we can define this using less macro-wizardry if we enable the
+<code>-fplan9-extensions</code> option in GCC as documented <a href="https://gcc.gnu.org/onlinedocs/gcc/Unnamed-Fields.html">here</a>.</p>
+<pre><code class="language-c">struct qvec_base {
+    size_t cap, len;
+}
+
+#define qvec(T)             \
+    struct qvec_##T {       \
+        struct qvec_base;   \
+        T data[];           \
+    }
+</code></pre>
+<p>This allows embedding of existing struct definitions as an anonymous struct.</p>
+<p>Now, finally, we can define our <code>push</code> function as:</p>
+<pre><code class="language-c">#define qvec_push(v, i)                                                 \
+({                                                                      \
+    if (v-&gt;len &gt;= v-&gt;cap) {                                             \
+        v-&gt;cap *= 2;                                                    \
+        v = realloc(v, sizeof(qvec_base) + v-&gt;cap * sizeof(*v-&gt;data));  \
+    }                                                                   \
+    v-&gt;data[v-&gt;len++] = (i);                                            \
+})
+</code></pre>
+<h3><code>free</code></h3>
+<p>Since we only use a single <code>malloc</code> to initialize the type, this is simply</p>
+<pre><code class="language-c">#define qvec_free(v) free(v)
+</code></pre>
+<h3>API so far</h3>
+<p>Lets see what this gives us so far</p>
+<pre><code class="language-c">qvec(int) *iv = qvec_new(int);
+qvec_push(iv, 5);
+qvec_push(iv, 8);
+printf(&quot;%d\n&quot;, qvec_at(iv, 0));
+qvec_at(iv, 1) = 5;
+qvec_free(iv);
+</code></pre>
+<p>and compared similar C++ vector usage</p>
+<pre><code class="language-c++">std::vector&lt;int&gt; iv;
+iv.push_back(5);
+iv.push_back(8);
+printf(&quot;%d\n&quot;, iv[0]);
+iv[1] = 5;
+</code></pre>
+<p>Looking okay, but lets go a bit further.</p>
+<h2>Extended Functions</h2>
+<h3>Generic Printing</h3>
+<p>It is fairly common that we want to dump the values of a vector to see what is
+inside. If we wanted to write this for an integer vector, the following would
+work</p>
+<pre><code class="language-c">#define qvec_int_print(v)               \
+({                                      \
+    printf(&quot;[&quot;);                        \
+    for (int i = 0; i &lt; v-&gt;len; ++i) {  \
+        printf(&quot;%d&quot;, v-&gt;data[i]);       \
+        if (i + 1 &lt; v-&gt;len)             \
+            printf(&quot;, &quot;);               \
+    }                                   \
+    printf(&quot;]\n&quot;);                      \
+})
+</code></pre>
+<p>which can be used as</p>
+<pre><code class="language-c">qvec_print(iv); // [5, 5]
+</code></pre>
+<p>This is nice, but since it isn’t generic it has a limited use case. Fortunately
+for us, C11 brings some new interesting features to the table which we can use.</p>
+<p>The C11 <code>_Generic</code> keyword allows rudimentary switching based on the type of
+its input. Think of it just as a <strong>compile-time switch statement on types</strong>.</p>
+<p>For example, we could construct a macro to print the name of a type</p>
+<pre><code class="language-c">#define type_name(x) _Generic((x), int: &quot;int&quot;, float: &quot;float&quot;)
+
+printf(&quot;This is a %s\n&quot;, type_name(5.0f));
+printf(&quot;This is a %s\n&quot;, type_name(5));
+</code></pre>
+<p>which when run would output</p>
+<pre><code>This is a float
+This is a int
+</code></pre>
+<p>We can use this to generate the appropriate <code>printf</code> format specifier for the
+passed type.</p>
+<pre><code class="language-c">#define GET_FMT_SPEC(x) _Generic((x), int: &quot;%d&quot;, float: &quot;%f&quot;, char*: &quot;%s&quot;)
+</code></pre>
+<p>and modifying our print function</p>
+<pre><code class="language-c">#define qvec_print(v)                   \
+({                                      \
+    printf(&quot;[&quot;);                        \
+    for (int i = 0; i &lt; v-&gt;len; ++i) {  \
+        printf(GET_FMT_SPEC(v-&gt;data[i]), v-&gt;data[i]);\
+        if (i + 1 &lt; v-&gt;len)             \
+            printf(&quot;, &quot;);               \
+    }                                   \
+    printf(&quot;]\n&quot;);                      \
+ })
+</code></pre>
+<p>This would now work on an integer and float <code>qvec</code> type with no modifications.
+Of course, we could extend <code>GET_FMT_SPEC</code> with whatever types we need.</p>
+<p><em>You may recall that I mentioned that we could solve an earlier issue regarding
+our <code>push</code> function if we could generate a type name from a variable. It seems
+like the <code>_Generic</code> keyword would help is achieve this and indeed it does in
+part. The problem is that it is evaluated after preprocessing, so we cannot use
+its output as part of the preprocessor token concatenation process.</em></p>
+<p><em>This is an easy mistake to make, since <code>_Generic</code> is seen pretty much solely
+within macro definitions for obvious reasons. This isn’t required though,
+the following being perfectly valid code.</em></p>
+<pre><code class="language-c">int a;
+float b;
+
+printf(&quot;%s\n&quot;, _Generic(a, int: &quot;a is an int&quot;, float: &quot;a is a float&quot;));
+printf(&quot;%s\n&quot;, _Generic(b, int: &quot;b is an int&quot;, float: &quot;b is a float&quot;));
+</code></pre>
+<h2>Initializer Lists</h2>
+<p>Since C++11, vectors can now be initialized with initializer lists</p>
+<pre><code class="language-c++">std::vector&lt;int&gt; = {4, 5, 2, 3};
+</code></pre>
+<p>This is pretty nice. Let’s add something similar to our <code>new</code> function using
+C99 variadic macros with a <a href="https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html">GCC extension</a>
+which allows an arbitrary name to be given for them.</p>
+<pre><code class="language-c">#define QVEC_ALEN(a) (sizeof(a) / sizeof(*a))
+
+#define qvec_new(T, xs...)                                                    \
+({                                                                            \
+    const size_t initial_size = 16;                                           \
+    const T _xs[] = {xs};                                                     \
+    struct qvec_##T *v = malloc(sizeof(qvec(T)) + sizeof(T) * QVEC_ALEN(_xs));\
+    v-&gt;cap = initial_size;                                                    \
+    v-&gt;len = QVEC_ALEN(_xs);                                                  \
+    for (int i = 0; i &lt; v-&gt;len; ++i)                                          \
+        v-&gt;data[i] = _xs[i];                                                  \
+    v;                                                                        \
+})
+</code></pre>
+<p><code>xs</code> here collects all arguments except the first. We assign these to a
+temporary array which allows us to work with the values, but also has the effect
+of typechecking the values.</p>
+<pre><code class="language-c">qvec(int) *v = qvec_new(int, 4, 5, 2, 3);
+</code></pre>
+<h2>Complex Objects</h2>
+<p>Suppose we have the following type</p>
+<pre><code class="language-c">typedef struct {
+    char *id;
+    bool is_tasty;
+} Food;
+</code></pre>
+<p>We might try and utilize C99 struct initializers to perform the following</p>
+<pre><code class="language-c">qvec(Food) *v = qvec_new(Food);
+qvec_push(v, { .id = &quot;apple&quot;, .is_tasty = true });
+</code></pre>
+<p>This however fails to compile. Under clang, we get the following error</p>
+<pre><code class="language-text">qvec.c:103:34: error: too many arguments provided to function-like macro
+      invocation
+    qvec_push(v, { &quot;apple&quot;, 1 });
+                                 ^
+qvec.c:42:9: note: macro 'qvec_push' defined here
+#define qvec_push(v, i)                                                       \
+        ^
+qvec.c:103:5: note: cannot use initializer list at the beginning of a macro
+      argument
+    qvec_push(v, { &quot;apple&quot;, 1 });
+    ^            ~~~~~~~~~~~~~~~~~~~~
+qvec.c:103:5: error: use of undeclared identifier 'qvec_push'
+    qvec_push(v, { &quot;apple&quot;, 1 });
+    ^
+</code></pre>
+<p>The reason this doesn’t work is that the C preprocessor is dumb. It doesn’t know
+that this is a designated initializer because it doesn’t actually know anything
+about the C language. Instead, it sees two arguments. The first being
+<code>{ .id = &quot;apple&quot;</code> and the second <code>.is_tasty = true }</code>.</p>
+<p>The can get around this is by using the previously mentioned variadic macros once
+again. Using a similar technique to the previously extended <code>new</code> function.</p>
+<pre><code class="language-c">#define qvec_push(v, xs...)                                             \
+({                                                                      \
+    const typeof(*v-&gt;data) _xs[] = {xs};                                \
+    if (v-&gt;len + QVEC_ALEN(_xs) &gt;= v-&gt;cap) {                            \
+        while (v-&gt;cap &lt;= v-&gt;len + alen(_xs)) {                          \
+            v-&gt;cap = 2 * v-&gt;cap;                                        \
+        }                                                               \
+        v = realloc(v, sizeof(qvec_base) + v-&gt;cap * sizeof(*v-&gt;data));  \
+    }                                                                   \
+    for (int i = 0; i &lt; QVEC_ALEN(_xs); ++i) {                          \
+        v-&gt;data[v-&gt;len++] = _xs[i];                                     \
+    }                                                                   \
+    v;                                                                  \
+})
+</code></pre>
+<p>The reason variadic macros help here is that all macro arguments are gathered at
+once and treated as input to an array initializer. Even though individual
+arguments are not valid tokens, it doesn’t matter, since the full set of
+argments is.</p>
+<p>Another thing to note is the use of the
+<a href="https://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof"><code>typeof</code></a> keyword. This
+allows us to retrieve the type of an expression, which can be used to initialize
+new types. The most common example of its usage is likely within a type-generic
+swap macro.</p>
+<pre><code class="language-c">#define swap(x, y)              \
+do {                            \
+    const typeof(x) _temp = y;  \
+    y = x;                      \
+    x = _temp;                  \
+} while (0)
+</code></pre>
+<h2>Extensions, Extensions, Extensions</h2>
+<p>Our code is already filled with compiler-specific C extensions, so we may as
+well go overboard.</p>
+<h3>RAII</h3>
+<p>One of the better features of C++ is the ability to utilize RAII to run
+destructors on block exit. This reduces the chance that leaks occur within
+programs and just makes using complex types much more pleasant.</p>
+<p>The
+<a href="https://gcc.gnu.org/onlinedocs/gcc-6.1.0/gcc/Common-Variable-Attributes.html"><code>cleanup</code></a>
+variable attribute is a GCC extension which allows a user-defined cleanup
+function to automatically run when the value goes out of scope.</p>
+<p>This attribute takes one argument, a function of type <code>void cleanup(T**)</code> where
+<code>T</code> is the type which this attribute is declared with.</p>
+<p>Using this with our <code>qvec</code>, it may look like</p>
+<pre><code class="language-c">static inline _qvec_free(void **qvec) { free(*qvec); }
+
+int main(void)
+{
+    qvec(int) __attribute__ ((cleanup(_qvec_free))) *qv = qvec_new(int);
+    // No qvec_free here!
+}
+</code></pre>
+<p>This is a little verbose however, so lets define our own <em>keyword</em> which we can
+use instead.</p>
+<pre><code class="language-c">#define raii __attribute__ ((cleanup(_qvec_free)))
+
+int main(void)
+{
+    raii qvec(int) *qv = qvec_new(int);
+}
+</code></pre>
+<p>Note that an attribute doesn’t strictly need to be specified after the type
+definition.</p>
+<p>This is nice, but if you had actually compiled the above you would get a number
+of type errors.</p>
+<pre><code>qvec.c: In function ‘main’:
+qvec.c:13:12: warning: passing argument 1 of ‘_qvec_free’ from incompatible pointer type [-Wincompatible-pointer-types]
+     struct {                                                                  \
+            ^
+qvec.c:26:40: note: in expansion of macro ‘qvec_base’
+     struct qvec_##T *v = malloc(sizeof(qvec_base) + sizeof(_xs));             \
+                                        ^
+qvec.c:94:25: note: in expansion of macro ‘qvec_new’
+     raii qvec(int) *v = qvec_new(int);
+                         ^
+qvec.c:88:20: note: expected ‘void **’ but argument is of type ‘struct qvec_int **’
+ static inline void _qvec_free(void **qvec) { free(*qvec); }
+</code></pre>
+<p>The compiler complains because we are relying on an implicit cast to void. We
+know this is actually valid however, since every <code>qvec</code> is going to use a
+single call to <code>free</code> in order to release its memory.</p>
+<p>As far as I’m aware, this requires a pragma at the callsite to disable this
+locally. This is quite inconvenient, and really loses out any usability that we
+may have gained from using this. The following will compile without warnings</p>
+<pre><code class="language-c">int main(void)
+{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored &quot;-Wincompatible-pointer-types&quot;
+    raii qvec(int) *v = qvec_new(int, 5, 4, 3);
+#pragma GCC diagnotic pop
+}
+</code></pre>
+<p>At this stage though, remembering to just manually free seems like a saner
+choice.</p>
+<h3>Type Inference</h3>
+<p>One of the nice features of C++11 onwards is the revitalization of the <code>auto</code>
+keyword. This now provides type inference which is very nice in a number of
+circumstances.</p>
+<p>If we look at our vector initialization</p>
+<pre><code class="language-c">qvec(int) *v = qvec_new(int);
+</code></pre>
+<p>we clearly have a bit of redundancy. Unfortunately the C language doesn’t support
+type inference… as part of the standard at least. An interesting extension is
+the <a href="https://gcc.gnu.org/onlinedocs/gcc/Typeof.html"><code>_auto_type</code></a> keyword which
+provides some limited type inference capabilities.</p>
+<p>Since the <code>auto</code> keyword is practically useless, lets just redefine it</p>
+<p><small><em>Redefining keywords is usually a <strong>very</strong> bad idea. Although, GCC
+<a href="https://gcc.gnu.org/onlinedocs/cpp/Macros.html#Macros">will allow it</a>.</em></small></p>
+<pre><code class="language-c">#define auto __auto_type
+
+auto iv = qvec_new(int);
+</code></pre>
+<p>Although yet again, our expectations differ to reality. This will not compile!
+The reason for this is that previously we were relying on the inline struct
+definition of <code>qvec(T)</code> that was declared on every initialization. Without this
+declaration, our new <code>auto</code> keyword cannot find any struct which matches the
+return type and must fail.</p>
+<p>As an example, the following works fine</p>
+<pre><code class="language-c">qvec(int) *a = qvec_new(int);
+auto b = qvec_new(int);
+</code></pre>
+<p>because the <code>qvec(int)</code> declared the struct, so the next <code>qvec</code> return type can
+be deduced correctly. This is simply an inherent limitation with the tools we
+have. A simple solution would be simply forward declare our structs.</p>
+<pre><code class="language-c">qvec(int);
+
+int main(void)
+{
+    auto a = qvec_new(int); // Ok!
+}
+</code></pre>
+<p>But this is one extra line to type for each <code>qvec</code> type required!</p>
+<h2>Drawbacks</h2>
+<p>We have a pretty good set of functions associated with our <code>qvec</code> so far.
+Usability is ok and we have a few of the more desirable features of C++ in our
+hands within C.</p>
+<p>Undoubtedly however, there are some inherent problems that we just can’t solve.</p>
+<h3>Complex Container Types</h3>
+<p>We can do the following in C++</p>
+<pre><code class="language-c++">std::vector&lt;std::vector&lt;std::vector&lt;int&gt;&gt;&gt; v;
+</code></pre>
+<p>To do this with our <code>qvec</code> the following is required</p>
+<pre><code class="language-c">typedef qvec(int) qvec_int;
+typedef qvec(qvec_int) qvec_qvec_int;
+qvec(qvec_qvec_int) *v = qvec_new(qvec_qvec_int);
+</code></pre>
+<p>Recall back to our <code>new</code> implementation. We generate a struct with a name
+<code>qvec_##T</code> where <code>T</code> is the type. Since this is concatenated to make an
+identifier, the types <em>must</em> be comprised only of characters which can exist
+within an identifier (<code>[_0-9A-Za-z]</code>). Any types which use other characters,
+such as functions, pointers and even our own <code>qvec</code> types must have a typedef
+before we can use them.</p>
+<p>As an example, the following</p>
+<pre><code class="language-c">qvec(char**);
+</code></pre>
+<p>expands to the invalid struct declaration</p>
+<pre><code class="language-c">struct qvec_char** {
+    size_t cap, len;
+    char* data[];
+};
+</code></pre>
+<h3>Too Much Inlining</h3>
+<p>Since we are dealing with macros, every call is going to generate the same code
+at the call site. This isn’t too big a deal with our <code>qvec</code>, since a vector is
+inherently pretty simple, but if we wanted to use the same techniques to
+construct a generic hashmap, for example, the code duplication would be much
+worse.</p>
+<p>This is where the generic containers which rely on simply generating the
+required functions for each type (see
+<a href="https://attractivechaos.wordpress.com/2008/09/02/implementing-generic-hash-library-in-c/">khash</a>)
+definitely have the upper hand.</p>
+<p>These approaches however do lose out a bit in terms of the expressiveness of the
+resulting API (which is our main focus here).</p>
+<h3>Which Names are Which?</h3>
+<p>Say we wanted to do the following contrived thing</p>
+<pre><code class="language-c">void print(qvec(int) *v)
+{
+    qvec_print(v);
+}
+
+int main(void)
+{
+    qvec(int) *v = qvec_new(int, 1, 2, 3);
+    print(v);
+}
+</code></pre>
+<p>This will spew our a mess of errors about anonymous structs. The reason being is
+that the <code>qvec(int)</code> in the <code>print</code> parameter list is declaring a new anonymous
+struct, and the two <code>qvec(int)</code> declarations are completely different
+structures.</p>
+<p>This can be worked around by doing a typedef at the start of your file and using
+this, but again at the cost of extra work for the programmer.</p>
+<p>How about the following example. Will this <code>qvec_new</code> be aware of the type being
+used within the <code>Foo</code> struct?</p>
+<pre><code class="language-c">struct Foo {
+    qvec(int) *values;
+};
+
+void foo_init(Foo *v)
+{
+    v-&gt;value = qvec_new(int);
+}
+
+int main(void)
+{
+    struct Foo f;
+    foo_init(&amp;f);
+}
+</code></pre>
+<p>This in fact will work potentially to some surprise. Even though this does, it
+still highlights a pretty important problem. Even though the API is nice and
+appears easy to use, there are a number of naming issues that the user must be
+aware of, which greatly limits its usage as a <em>just works</em> type of structure.</p>
+<h2>A Final Look</h2>
+<pre><code class="language-c">#include &quot;qvec.h&quot;
+
+typedef char* string;
+
+typedef struct {
+    int x, y;
+} Tuple;
+
+int main(void)
+{
+    qvec(string) *sv = qvec_new(string, &quot;Who&quot;, &quot;are&quot;, &quot;you?&quot;);
+    qvec_print(sv);
+    qvec_at(sv, 2) = &quot;we?&quot;;
+    qvec_print(sv);
+    qvec_free(sv);
+
+    qvec(int) *iv = qvec_new(int, 1, 2, 3, 4);
+    qvec_print(iv);
+    printf(&quot;%d\n&quot;, qvec_pop(iv));
+    qvec_free(iv);
+
+    qvec(Tuple) *tv = qvec_new(Tuple, { .x = 0, .y = 1 }, { 4, 2 }, { 5, 4 });
+    printf(&quot;%d\n&quot;, qvec_at(tv, 1).x);
+    printf(&quot;%d\n&quot;, qvec_at(tv, 2).x);
+    qvec_free(tv);
+}
+</code></pre>
+<p>So would I recommend using this? Probably not. If you were insistent on
+sticking with C however I think the best compromise would be to generate the
+specific instantiations (similar to what <a href="https://attractivechaos.wordpress.com/2008/09/02/implementing-generic-hash-library-in-c/">khash</a>
+does). This gets rid of most of the problems specified here. Alternatively,
+if performance and the type-safety isn’t a big deal, then a tried and tested
+<code>void*</code> implementation would be good too.</p>
+<p>At the end of the day though, the pragmatic solution would be to just use C++
+if there are no reasons not to and call it a day. Especially if you are
+considering performing these types of C macro chicanery.</p>
+        </div>
+
+        <div class="footer">
+            <a href="/">home</a> - <a href="https://github.com/tiehuis/">github</a> <!-- - <a href="/feed.xml">rss</a> --> <br/>
+        </div>
+    </body>
+</html>

@@ -1,5 +1,0 @@
-#!/bin/bash
-
-bundle exec jekyll build --watch --drafts --incremental &
-cd _site && live-server --wait=50 &
-wait
