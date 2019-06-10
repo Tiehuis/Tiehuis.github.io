@@ -65,3 +65,9 @@ code {
     font-size: small;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  filter: invert(80%);
+  background-color: black;
+}
+
