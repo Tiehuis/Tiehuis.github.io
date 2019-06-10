@@ -102,7 +102,14 @@ build: $(HTML)
 
 blog/%.html: blog/%.md $(TMPL)
 	@echo $<
-@bash -c 'cat ./build/1.html ./build/1.css ./build/2.html <(cmark --smart $<) ./build/3.html > $@'
+	@bash -c 'cat ./build/1.html ./build/1.css ./build/2.html <(cmark --unsafe --smart $<) ./build/3.html > $@'
+
+watch:
+	@while inotifywait -qq -e move -e modify -e create -e delete --exclude './blog/*.html' ./blog; do \
+		make -s; \
+	done
+
+.PHONY: watch
 ```
 
 Finally, a change I had been meaning to do for a while anyway was to adjust the

@@ -179,7 +179,14 @@ build: $(HTML)
 
 blog/%.html: blog/%.md $(TMPL)
 	@echo $&lt;
-@bash -c 'cat ./build/1.html ./build/1.css ./build/2.html &lt;(cmark --smart $&lt;) ./build/3.html &gt; $@'
+	@bash -c 'cat ./build/1.html ./build/1.css ./build/2.html &lt;(cmark --unsafe --smart $&lt;) ./build/3.html &gt; $@'
+
+watch:
+	@while inotifywait -qq -e move -e modify -e create -e delete --exclude './blog/*.html' ./blog; do \
+		make -s; \
+	done
+
+.PHONY: watch
 </code></pre>
 <p>Finally, a change I had been meaning to do for a while anyway was to adjust the
 path of the blog entries behind the <code>/blog</code> path. I’ve kept the existing links
