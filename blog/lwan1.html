@@ -4,197 +4,145 @@
     <meta charset="utf-8">
     <meta name="author" content="Marc Tiehuis">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Ramblings mostly about programming.">
     <title>blog</title>
     <style>
-html, body {
-  font-family: sans-serif;
-  font-size: small;
-  line-height: 1.5;
-}
+       html, body         { font-family: sans-serif; font-size: small; line-height: 1.5; }
+       h1, h2, h3         { margin-top: 2em; }
+       h3, h4, h5         { color: #2d58b7; }
+       h1:nth-of-type(1)  { margin-top: 0.7em; margin-bottom: 0em; text-align: right; }
+       pre > code         { display: block; overflow: auto; padding: 0.3em; }
+       code               { background-color: snow; font-size: 13px; }
+      .published          { margin-bottom: 4em; text-align: right; }
+      .post, .home        { margin-left: auto; margin-right: auto; }
+      .home-link          { float:left; margin-top: 0.7em; }
+      .footer             { text-align: center; margin-top: 3em; margin-bottom: 1.5em; }
 
-h1, h2, h3 {
-  margin-top: 2em;
-}
+      @media screen and (min-width: 45em) {
+        .post, .home, .central-element { width: 50em; } }
 
-h3, h4, h5 {
-  color: #2d58b7;
-}
+      @media screen and (max-width: 45em) {
+         code { font-size: small; }
+        .post, .home, .central-element { width: 92%; }
+      }
 
-h1:nth-of-type(1) {
-  margin-top: 0.7em;
-  margin-bottom: 0em;
-  text-align: right;
-}
-
-.published {
-  margin-bottom: 4em;
-  text-align: right;
-}
-
-.post, .home {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.home-link {
-  float:left;
-  margin-top: 0.7em;
-}
-
-.footer {
-  text-align: center;
-  margin-top: 3em;
-  margin-bottom: 1.5em;
-}
-
-pre > code {
-  display: block;
-  overflow: auto;
-  padding: 0.3em;
-}
-
-code {
-  background-color: snow;
-  font-size: 13px;
-}
-
-@media screen and (min-width: 45em) {
-  .post, .home, .central-element {
-    width: 50em;
-  }
-}
-
-@media screen and (max-width: 45em) {
-  .post, .home, .central-element {
-    width: 92%;
-  }
-
-  code {
-    font-size: small;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  filter: invert(80%);
-  background-color: black;
-}
-
+      @media (prefers-color-scheme: dark) {
+        filter: invert(80%); background-color: black; }
     </style>
   </head>
   <body>
     <div class="post">
       <div class="home-link"><a href="../index.html">home</a></div>
-<h1>Lwan Api Intro</h1>
-<div class="published"><time datetime="2017-02-16">16 Feb 2017</time></div>
-<p><em><small>See <a href="https://github.com/tiehuis/lwan-api-example">this</a> repository for
-a complete example project.</small></em></p>
-<p><a href="https://lwan.ws/">Lwan</a> is a high performance &amp; scalable web server written in
-C.</p>
-<p><em>The main page has now been updated so the following is no longer applicable.
-Skip to the <strong>Building</strong> section.</em></p>
-<p>An API example is listed on the main project page.</p>
-<pre><code class="language-c">#include &quot;lwan.h&quot;
+      <h1>Lwan Api Intro</h1>
+      <div class="published"><time datetime="2017-02-16">16 Feb 2017</time></div>
+      <p><em><small>See <a href="https://github.com/tiehuis/lwan-api-example">this</a> repository for
+      a complete example project.</small></em></p>
+      <p><a href="https://lwan.ws/">Lwan</a> is a high performance &amp; scalable web server written in
+      C.</p>
+      <p><em>The main page has now been updated so the following is no longer applicable.
+      Skip to the <strong>Building</strong> section.</em></p>
+      <p>An API example is listed on the main project page.</p>
+      <pre><code class="language-c">#include &quot;lwan.h&quot;
 
-static lwan_http_status_t
-hello_world(lwan_request_t *request,
-            lwan_response_t *response, void *data)
-{
-    static const char message[] = &quot;Hello, World!&quot;;
+      static lwan_http_status_t
+      hello_world(lwan_request_t *request,
+                  lwan_response_t *response, void *data)
+      {
+          static const char message[] = &quot;Hello, World!&quot;;
 
-    response-&gt;mime_type = &quot;text/plain&quot;;
-    strbuf_set_static(response-&gt;buffer, message, sizeof(message) - 1);
+          response-&gt;mime_type = &quot;text/plain&quot;;
+          strbuf_set_static(response-&gt;buffer, message, sizeof(message) - 1);
 
-    return HTTP_OK;
-}
+          return HTTP_OK;
+      }
 
-int
-main(void)
-{
-    const lwan_url_map_t default_map[] = {
-        { .prefix = &quot;/&quot;, .handler = hello_world },
-        { .prefix = NULL }
-    };
-    lwan_t l;
+      int
+      main(void)
+      {
+          const lwan_url_map_t default_map[] = {
+              { .prefix = &quot;/&quot;, .handler = hello_world },
+              { .prefix = NULL }
+          };
+          lwan_t l;
 
-    lwan_init(&amp;l);
+          lwan_init(&amp;l);
 
-    lwan_set_url_map(&amp;l, default_map);
-    lwan_main_loop(&amp;l);
+          lwan_set_url_map(&amp;l, default_map);
+          lwan_main_loop(&amp;l);
 
-    lwan_shutdown(&amp;l);
+          lwan_shutdown(&amp;l);
 
-    return 0;
-}
-</code></pre>
-<p>This looks great, easy to use and no real surprises. Unfortunately, this is
-incompatible with the current master branch at the time of writing. Further,
-the documentation on using Lwan as a library is a bit sparse at this time.</p>
-<p>This will be a quick-start guide to setting up a sample project and going from
-there.</p>
-<h2>Building</h2>
-<p>First, we’ll create a new project.</p>
-<pre><code class="language-text">mkdir lwan-api-example
-cd lwan-api-example
-</code></pre>
-<p>Next, let’s pull lwan into the project and build it. You will need CMake and
-zlib installed for this.</p>
-<pre><code class="language-text">git clone https://github.com/lpereira/lwan # Use a submodule here if using git!
-cd lwan
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make
-</code></pre>
-<p>This generates <code>liblwan.a</code> and <code>liblwan.so</code> library files in the <code>build/common</code>
-directory. We’ll come back to these later, lets start a simple project.</p>
-<h2>Creating the project</h2>
-<p>Let’s go back to our project root and create a new file, <code>hello.c</code>.</p>
-<pre><code class="language-c">#include &lt;lwan.h&gt;
+          return 0;
+      }
+      </code></pre>
+      <p>This looks great, easy to use and no real surprises. Unfortunately, this is
+      incompatible with the current master branch at the time of writing. Further,
+      the documentation on using Lwan as a library is a bit sparse at this time.</p>
+      <p>This will be a quick-start guide to setting up a sample project and going from
+      there.</p>
+      <h2>Building</h2>
+      <p>First, we’ll create a new project.</p>
+      <pre><code class="language-text">mkdir lwan-api-example
+      cd lwan-api-example
+      </code></pre>
+      <p>Next, let’s pull lwan into the project and build it. You will need CMake and
+      zlib installed for this.</p>
+      <pre><code class="language-text">git clone https://github.com/lpereira/lwan # Use a submodule here if using git!
+      cd lwan
+      mkdir build
+      cd build
+      cmake .. -DCMAKE_BUILD_TYPE=Release
+      make
+      </code></pre>
+      <p>This generates <code>liblwan.a</code> and <code>liblwan.so</code> library files in the <code>build/common</code>
+      directory. We’ll come back to these later, lets start a simple project.</p>
+      <h2>Creating the project</h2>
+      <p>Let’s go back to our project root and create a new file, <code>hello.c</code>.</p>
+      <pre><code class="language-c">#include &lt;lwan.h&gt;
 
-static enum lwan_http_status hello_world(
-        struct lwan_request *request,
-        struct lwan_response *response,
-        void *data)
-{
-    static const char message[] = &quot;Hello, World!&quot;;
+      static enum lwan_http_status hello_world(
+              struct lwan_request *request,
+              struct lwan_response *response,
+              void *data)
+      {
+          static const char message[] = &quot;Hello, World!&quot;;
 
-    response-&gt;mime_type = &quot;text/plain&quot;;
-    strbuf_set_static(response-&gt;buffer, message, sizeof(message) - 1);
+          response-&gt;mime_type = &quot;text/plain&quot;;
+          strbuf_set_static(response-&gt;buffer, message, sizeof(message) - 1);
 
-    return HTTP_OK;
-}
+          return HTTP_OK;
+      }
 
-int main(void)
-{
-    const struct lwan_url_map default_map[] = {
-        { .prefix = &quot;/&quot;, .handler = hello_world },
-        { .prefix = NULL }
-    };
+      int main(void)
+      {
+          const struct lwan_url_map default_map[] = {
+              { .prefix = &quot;/&quot;, .handler = hello_world },
+              { .prefix = NULL }
+          };
 
-    struct lwan l;
-    lwan_init(&amp;l);
+          struct lwan l;
+          lwan_init(&amp;l);
 
-    lwan_set_url_map(&amp;l, default_map);
-    lwan_main_loop(&amp;l);
+          lwan_set_url_map(&amp;l, default_map);
+          lwan_main_loop(&amp;l);
 
-    lwan_shutdown(&amp;l);
-    return 0;
-}
-</code></pre>
-<p>Note that the main differences between the current api is the removal of <code>_t</code>
-specifiers (likely for POSIX conformance).</p>
-<h2>Building our project</h2>
-<p>The include headers are stored in the <code>common</code> directory. We also require the
-include header generated by CMake which is found in the <code>build</code> directory.</p>
-<p>We then can build our project.</p>
-<pre><code>gcc -O2 -Ilwan/common -Ilwan/build hello.c lwan/build/common/liblwan.a \
-    -o hello -lpthread -ldl -lz
-</code></pre>
-<p>We need to remember to link the pthread, dl and zlib libraries. That should be
-it, you should now have a binary <code>hello</code> that you can run.</p>
-<p>Have fun!</p>
+          lwan_shutdown(&amp;l);
+          return 0;
+      }
+      </code></pre>
+      <p>Note that the main differences between the current api is the removal of <code>_t</code>
+      specifiers (likely for POSIX conformance).</p>
+      <h2>Building our project</h2>
+      <p>The include headers are stored in the <code>common</code> directory. We also require the
+      include header generated by CMake which is found in the <code>build</code> directory.</p>
+      <p>We then can build our project.</p>
+      <pre><code>gcc -O2 -Ilwan/common -Ilwan/build hello.c lwan/build/common/liblwan.a \
+          -o hello -lpthread -ldl -lz
+      </code></pre>
+      <p>We need to remember to link the pthread, dl and zlib libraries. That should be
+      it, you should now have a binary <code>hello</code> that you can run.</p>
+      <p>Have fun!</p>
     </div>
-
     <div class="footer">
       <a href="../index.html">home</a> - <a href="https://github.com/tiehuis/">github</a> <!-- - <a href="/feed.xml">rss</a> --> <br/>
     </div>

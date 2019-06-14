@@ -1,4 +1,4 @@
-MD := $(wildcard ./blog/*.md)
+MD   := $(wildcard ./blog/*.md)
 TMPL := $(wildcard ./build/*)
 HTML := $(MD:.md=.html)
 
@@ -6,7 +6,10 @@ build: $(HTML)
 
 blog/%.html: blog/%.md $(TMPL)
 	@echo $<
-	@bash -c 'cat ./build/1.html ./build/1.css ./build/2.html <(cmark --unsafe --smart $<) ./build/3.html > $@'
+	@bash -c 'cat 															\
+		./build/1.html ./build/1.css ./build/2.html 						\
+		<(cmark --unsafe --smart $< | sed "s/^/      /" | sed "s/[ ]*$$//") \
+		./build/3.html > $@'
 
 watch:
 	@while inotifywait -qq -e move -e modify -e create -e delete --exclude './blog/*.html' ./blog; do \
