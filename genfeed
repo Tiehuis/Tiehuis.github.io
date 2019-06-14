@@ -1,0 +1,35 @@
+#!/bin/bash
+
+output='atom.xml'
+
+echo "\
+<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<feed xmlns=\"http://www.w3.org/2005/Atom\">
+
+  <title>blog</title>
+  <link href=\"https://tiehu.is/\"/>
+  <id>https://tiehu.is/</id>
+  <updated>2019-06-10T00:00:00Z</updated>
+  <author>
+    <name>Marc Tiehuis</name>
+  </author>" > "$output"
+
+for file in blog/*.html; do
+    id=$(basename -s '.html' "$file")
+    time="$(sed -rn 's/<div .*><time datetime="(.*)">.*<\/time><\/div>/\1/p' "$file")T00:00:00Z"
+    title=$(sed -rn 's/<h1>(.*)<\/h1>/\1/p' "$file")
+
+    echo "\
+<entry>
+  <title>$title</title>
+  <link href=\"https://tiehu.is/blog/$id\"/>
+  <id>https://tiehu.is/blog/$id</id>
+  <updated>$time</updated>
+  <content type=\"html\"><![CDATA[" >> "$output"
+  cat "$file" >> "$output"
+  echo "]]>\
+  </content>
+</entry>" >> "$output"
+done
+
+echo "</feed>" >> "$output"
