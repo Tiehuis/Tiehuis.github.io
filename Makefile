@@ -6,9 +6,9 @@ build: $(HTML) atom.xml
 
 blog/%.html: blog/%.md $(TMPL)
 	@echo $@
-	@bash -c 'cat 															\
-		./build/1.html ./build/1.css ./build/2.html 						\
-		<(cmark --unsafe --smart $< | sed "s/^/      /" | sed "s/[ ]*$$//") \
+	@bash -c 'cat 										\
+		./build/1.html ./build/1.css ./build/2.html 	\
+		<(cmark --unsafe --smart $<)					\
 		./build/3.html > $@'
 
 atom.xml: genfeed $(HTML)
