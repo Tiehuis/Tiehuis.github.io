@@ -101,7 +101,7 @@ This feature is used to combine `set` functions into a [single function](https:/
 instead of needing a variety of functions for each type as in GMP (`mpz_set_ui`,
 `mpz_set_si`, ...).
 
-## Peformance
+## Performance
 
 Perhaps the most important detail of a big integer library is its raw
 performance. I'll walk through the low-level addition routine and look at some
