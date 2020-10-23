@@ -1547,7 +1547,7 @@ write.</p>
 <p>This feature is used to combine <code>set</code> functions into a <a href="https://github.com/tiehuis/zig-bn/blob/8691da48134b029c26df5fd26ddf07b78b90bca3/bigint.zig#L104">single function</a>
 instead of needing a variety of functions for each type as in GMP (<code>mpz_set_ui</code>,
 <code>mpz_set_si</code>, …).</p>
-<h2>Peformance</h2>
+<h2>Performance</h2>
 <p>Perhaps the most important detail of a big integer library is its raw
 performance. I’ll walk through the low-level addition routine and look at some
 techniques we can use to speed it up incrementally.</p>
